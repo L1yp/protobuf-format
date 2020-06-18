@@ -14,18 +14,30 @@ import java.util.Map;
 public class PbParser {
 
     public RootElem parse(byte[] src){
+        if (src == null || src.length == 0){
+            return null;
+        }
+
+        return parse(src, 0, src.length);
+    }
+
+    public RootElem parse(byte[] src, int off, int len){
+        if (src == null || len == 0){
+            return null;
+        }
         RootElem root = new RootElem();
         root.setKey("root");
         root.setBuffer(src);
-        root.setOff(0);
-        root.setLen(src.length);
+        root.setOff(off);
+        root.setLen(len);
 
         parse0(root);
 
         return root;
     }
 
-    public void parse0(BaseElem root){
+
+    private void parse0(BaseElem root){
 
         LinkedList<BaseElem> folder = new LinkedList<>();
         folder.push(root);
@@ -52,19 +64,23 @@ public class PbParser {
                 tagElem.setParent(tagElem);
 
                 try {
+
                     BaseElem valueElem = TypeHandler.handle(type, tagElem, packet);
                     if (valueElem == null){
                         succ = false;
                         break;
                     }
+
                     if (type == WireFormatMicro.WIRETYPE_LENGTH_DELIMITED
                         && valueElem.getLen() > 1
                         && !CharacterUtil.isPrintable(valueElem.getBuffer(),
                             valueElem.getOff(), valueElem.getLen(), StandardCharsets.UTF_8)){
+
                         Packet pack = new Packet(father.getBuffer(), valueElem.getOff(), valueElem.getLen());
                         if (pack.peekVarintSize() != valueElem.getLen()){
                             folder.addFirst(valueElem);
                         }
+
                     }
                     father.add(tagElem);
                 } catch (InvalidProtocolBufferMicroException ignored){
@@ -100,236 +116,6 @@ public class PbParser {
         }
 
     }
-
-    public static class BaseElem {
-
-        protected static final String[] typeNames = new String[]{
-                "Varint(0)",
-                "Fixed64(1)",
-                "LengthDelimited(2)",
-                "ItemTag(3)",
-                "ItemEndTag(4)",
-                "Fixed32(5)",
-        };
-
-        private BaseElem parent;
-
-        private byte[] buffer;
-
-        private int off;
-
-        private int len;
-
-        private final List<BaseElem> children = new LinkedList<>();
-
-        public void setParent(BaseElem parent) {
-            this.parent = parent;
-        }
-
-        public byte[] getBuffer() {
-            return buffer;
-        }
-
-        public void setBuffer(byte[] buffer) {
-            this.buffer = buffer;
-        }
-
-        public int getOff() {
-            return off;
-        }
-
-        public void setOff(int off) {
-            this.off = off;
-        }
-
-        public int getLen() {
-            return len;
-        }
-
-        public void setLen(int len) {
-            this.len = len;
-        }
-
-        public List<BaseElem> getChildren() {
-            return children;
-        }
-
-        public void add(BaseElem elem){
-
-            children.add(elem);
-        }
-
-        public void clear(){
-            children.clear();
-        }
-
-        public boolean isLeaf(){
-            return children.isEmpty();
-        }
-
-    }
-
-    public static class RootElem extends BaseElem {
-        private String key;
-
-        public String getKey() {
-            return key;
-        }
-
-        public void setKey(String key) {
-            this.key = key;
-        }
-
-        @Override
-        public String toString() {
-            return key;
-        }
-    }
-
-    public static class TagElem extends BaseElem {
-        private int key;
-        private int tag;
-        private int type;
-
-        public int getKey() {
-            return key;
-        }
-
-        public void setKey(int key) {
-            this.key = key;
-        }
-
-        public int getTag() {
-            return tag;
-        }
-
-        public void setTag(int tag) {
-            this.tag = tag;
-        }
-
-        public int getType() {
-            return type;
-        }
-
-        public void setType(int type) {
-            this.type = type;
-        }
-
-        @Override
-        public String toString() {
-            String hex = HexUtil.bin2hex(getBuffer(), getOff(), getLen());
-            return String.format("%s(%d)[%d, %s]", hex, key, tag, typeNames[type]);
-        }
-    }
-
-    public static class LengthElem extends BaseElem {
-        private int length;
-
-        public int getLength() {
-            return length;
-        }
-
-        public void setLength(int length) {
-            this.length = length;
-        }
-
-        @Override
-        public String toString() {
-            String hex = HexUtil.bin2hex(getBuffer(), getOff(), getLen());
-            return String.format("%s {length: %d}", hex, length);
-        }
-    }
-
-    public static class VarintElem extends BaseElem {
-        private long value;
-
-        public long getValue() {
-            return value;
-        }
-
-        public void setValue(long value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            String hex = HexUtil.bin2hex(getBuffer(), getOff(), getLen());
-            return String.format("%s {value: %d}", hex, value);
-        }
-    }
-
-    public static class Fixed32Elem extends BaseElem {
-        private int value;
-
-        public int getValue() {
-            return value;
-        }
-
-        public void setValue(int value) {
-            this.value = value;
-        }
-
-        public long getValueLE(){
-            return Integer.reverseBytes(value);
-        }
-
-        @Override
-        public String toString() {
-            String hex = HexUtil.bin2hex(getBuffer(), getOff(), getLen());
-            return String.format("%s {value: %d, valueLE: %d}", hex, value, Integer.reverseBytes(value));
-        }
-    }
-
-    public static class Fixed64Elem extends BaseElem {
-        private long value;
-
-        public long getValue() {
-            return value;
-        }
-
-        public void setValue(long value) {
-            this.value = value;
-        }
-
-        public long getValueLE(){
-            return Long.reverseBytes(value);
-        }
-
-        @Override
-        public String toString() {
-            String hex = HexUtil.bin2hex(getBuffer(), getOff(), getLen());
-            return String.format("%s {value: %d, valueLE: %d}", hex, value, Long.reverseBytes(value));
-        }
-    }
-
-    public static class BytesElem extends BaseElem {
-
-        Boolean printable = null;
-
-        public Boolean getPrintable() {
-            return printable;
-        }
-
-        @Override
-        public String toString() {
-            if (isLeaf() && CharacterUtil.isPrintable(getBuffer(), getOff(), getLen(), StandardCharsets.UTF_8)){
-                printable = Boolean.TRUE;
-                return new String(getBuffer(), getOff(), getLen(), StandardCharsets.UTF_8);
-            }else {
-                printable = Boolean.FALSE;
-                return HexUtil.bin2hex(getBuffer(), getOff(), getLen());
-            }
-        }
-    }
-
-    public static class InvalidProtocolBufferMicroException extends RuntimeException {
-
-        public InvalidProtocolBufferMicroException(String message){
-            super(message);
-        }
-
-    }
-
 
     private enum TypeStrategy implements TypeHandler{
 

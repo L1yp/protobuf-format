@@ -381,7 +381,7 @@ public class CharacterUtil {
                         return false;
                     }
                 }else {
-                    i++;
+                    return false;
                 }
             }
             return true;

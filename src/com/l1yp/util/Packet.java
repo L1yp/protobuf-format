@@ -81,6 +81,82 @@ public class Packet {
         writerPos += 4;
     }
 
+    public void setFixed32(long val){
+        checkWriteBound(4);
+        buf[writerPos + 3] = (byte) (val >> 0);
+        buf[writerPos + 2] = (byte) (val >> 8);
+        buf[writerPos + 1] = (byte) (val >> 16);
+        buf[writerPos + 0] = (byte) (val >> 24);
+        writerPos += 4;
+    }
+
+    public void setFixed32LE(long val){
+        checkWriteBound(4);
+        buf[writerPos + 0] = (byte) (val >> 0);
+        buf[writerPos + 1] = (byte) (val >> 8);
+        buf[writerPos + 2] = (byte) (val >> 16);
+        buf[writerPos + 3] = (byte) (val >> 24);
+        writerPos += 4;
+    }
+
+    public void setFixed64(long val){
+        checkWriteBound(8);
+        buf[writerPos + 7] = (byte) (val >> 0);
+        buf[writerPos + 6] = (byte) (val >> 8);
+        buf[writerPos + 5] = (byte) (val >> 16);
+        buf[writerPos + 4] = (byte) (val >> 24);
+        buf[writerPos + 3] = (byte) (val >> 32);
+        buf[writerPos + 2] = (byte) (val >> 40);
+        buf[writerPos + 1] = (byte) (val >> 48);
+        buf[writerPos + 0] = (byte) (val >> 56);
+        writerPos += 8;
+    }
+
+    public void setFixedLE(long val){
+        checkWriteBound(8);
+        buf[writerPos + 0] = (byte) (val >> 0);
+        buf[writerPos + 1] = (byte) (val >> 8);
+        buf[writerPos + 2] = (byte) (val >> 16);
+        buf[writerPos + 3] = (byte) (val >> 24);
+        buf[writerPos + 4] = (byte) (val >> 32);
+        buf[writerPos + 5] = (byte) (val >> 40);
+        buf[writerPos + 6] = (byte) (val >> 48);
+        buf[writerPos + 7] = (byte) (val >> 56);
+        writerPos += 8;
+    }
+
+    public void setVarint32(int tag, int val){
+        setVarint32(WireFormatMicro.makeTag(tag, WireFormatMicro.WIRETYPE_VARINT));
+        setVarint32(val);
+    }
+
+
+    public void setVarint32(int val){
+        int ret = val;
+        while ((ret & -128) != 0) {
+            setByte((ret & 127) | 128);
+            ret >>>= 7;
+        }
+        setByte(ret);
+    }
+
+    public void setVarint64(long val){
+        long ret = val;
+        while ((ret & -128) != 0) {
+            setByte((int) ((ret & 127) | 128));
+            ret >>>= 7;
+        }
+        setByte((int) ret);
+    }
+
+    public void setPbBytes(int tag, byte[] val){
+        setVarint32(WireFormatMicro.makeTag(tag, WireFormatMicro.WIRETYPE_LENGTH_DELIMITED));
+        setVarint32(val.length);
+        if (val.length > 0){
+            setBytes(val);
+        }
+    }
+
     public void setLong(long val){
         checkWriteBound(8);
         buf[writerPos + 7] = (byte) ((int) (val >> 0));
