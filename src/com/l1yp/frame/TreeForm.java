@@ -1,14 +1,14 @@
 package com.l1yp.frame;
 
-import com.l1yp.util.BaseElem;
-import com.l1yp.util.BytesElem;
-import com.l1yp.util.Fixed32Elem;
-import com.l1yp.util.Fixed64Elem;
+import com.l1yp.pb.BaseElem;
+import com.l1yp.pb.BytesElem;
+import com.l1yp.pb.Fixed32Elem;
+import com.l1yp.pb.Fixed64Elem;
 import com.l1yp.util.HexUtil;
-import com.l1yp.util.LengthElem;
-import com.l1yp.util.PbParser;
-import com.l1yp.util.RootElem;
-import com.l1yp.util.VarintElem;
+import com.l1yp.pb.LengthElem;
+import com.l1yp.pb.PbParser;
+import com.l1yp.pb.RootElem;
+import com.l1yp.pb.VarintElem;
 
 import javax.swing.*;
 import javax.swing.border.Border;

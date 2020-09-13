@@ -1,9 +1,11 @@
-package com.l1yp.util;
+package com.l1yp.pb;
+
+import com.l1yp.util.CharacterUtil;
+import com.l1yp.util.Packet;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 /**

@@ -1,5 +1,8 @@
 package com.l1yp.util;
 
+import com.l1yp.jce.HeadData;
+import com.l1yp.pb.WireFormatMicro;
+
 public class Packet {
 
     private byte[] buf;
@@ -7,6 +10,9 @@ public class Packet {
     private int readerPos = 0;
     private int limit = 0;
     private int initPos = 0;
+    private int markReaderPos;
+    private int markWriterPos;
+
 
     public Packet(){
         this(1024);
@@ -292,6 +298,16 @@ public class Packet {
         return l;
     }
 
+    public float readFloat(){
+        int bits = readInt();
+        return Float.intBitsToFloat(bits);
+    }
+
+    public double readDouble(){
+        long bits = readLong();
+        return Double.longBitsToDouble(bits);
+    }
+
     public long readLongLE(){
         checkReadBound(8);
         long l = (long) buf[readerPos]     & 0xff        |
@@ -320,6 +336,23 @@ public class Packet {
         readerPos += size;
         return bytes;
     }
+
+    public void markReaderIndex(){
+        markReaderPos = readerPos;
+    }
+
+    public void resetReaderIndex(){
+        readerPos = markReaderPos;
+    }
+
+    public void markWriterIndex(){
+        markWriterPos = writerPos;
+    }
+
+    public void resetWriterIndex(){
+        writerPos = markWriterPos;
+    }
+
 
     // read protobuf type
 
@@ -385,4 +418,85 @@ public class Packet {
     public int getInitPos() {
         return initPos;
     }
+
+    // jce
+
+    public HeadData peekHead(){
+        if (remaining() <= 0){
+            return null;
+        }
+        markReaderIndex();
+        byte b = read();
+        HeadData head = new HeadData();
+        head.type = (byte) (b & 15);
+        head.tag = (byte) ((b & 240) >> 4);
+        if (head.tag == 15){
+            byte b2 = read();
+            head.tag = b2 & 0x00FF;
+        }
+        resetReaderIndex();
+        return head;
+    }
+
+    public HeadData readHead(){
+        if (remaining()  == 0){
+            return null;
+        }
+        byte b = read();
+        HeadData head = new HeadData();
+        head.type = (byte) (b & 15);
+        head.tag = (byte) ((b & 240) >> 4);
+        if (head.tag == 15){
+            byte b2 = read();
+            head.tag = b2 & 0x00FF;
+        }
+        return head;
+    }
+
+    public void skipHead(){
+        byte b = read();
+        int tag = (byte) ((b & 0xF0) >> 4);
+        if (tag == 0x0F){
+            skip(1);
+        }
+    }
+
+    public void skip(int len) {
+        checkReadBound(len);
+        readerPos += len;
+    }
+
+    public long readJceNumber(){
+        HeadData head = readHead();
+        if (head.type == HeadData.BYTE){
+            return read();
+        }else if (head.type == HeadData.SHORT){
+            return readShort();
+        }else if (head.type == HeadData.INT){
+            return readInt();
+        }else if (head.type == HeadData.LONG){
+            return readLong();
+        }else if (head.type == HeadData.ZERO_TAG){
+            return 0;
+        }else {
+            throw new IllegalArgumentException("type mismatch, expect number, but " + head.type);
+        }
+    }
+
+    public int readJceInt(){
+        HeadData head = readHead();
+        if (head.type == HeadData.BYTE){
+            return read();
+        }else if (head.type == HeadData.SHORT){
+            return readShort();
+        }else if (head.type == HeadData.INT){
+            return readInt();
+        }else if (head.type == HeadData.ZERO_TAG){
+            return 0;
+        }else {
+            throw new IllegalArgumentException("type mismatch, expect number, but " + head.type);
+
+        }
+    }
+
 }

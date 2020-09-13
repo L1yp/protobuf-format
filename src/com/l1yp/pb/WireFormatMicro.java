@@ -1,4 +1,4 @@
-package com.l1yp.util;
+package com.l1yp.pb;
 
 public final class WireFormatMicro {
     public static final int MESSAGE_SET_ITEM = 1;

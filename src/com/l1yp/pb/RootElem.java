@@ -1,4 +1,4 @@
-package com.l1yp.util;
+package com.l1yp.pb;
 
 public class RootElem extends BaseElem {
     private String key;

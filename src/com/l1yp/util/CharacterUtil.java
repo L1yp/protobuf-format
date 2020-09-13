@@ -334,52 +334,68 @@ public class CharacterUtil {
 
         @Override
         public boolean isPrintable(byte[] src, int off, int len) {
-            byte b;
+            int b0;
             int i = off;
             int limit = off + len;
             while (i < limit){
-                b = src[i];
-                if ((b & 128) == 0){
+                b0 = src[i] & 0x00FF;
+                if ((b0 & 0x80) == 0){
                     // 0xxx xxxx为单字节字符 ASCII
-                    if (!CharUtil.isPrintable(b)){
+                    if (!CharUtil.isPrintable(b0)){
                         return false;
                     }
                     i++;
-                }else if ((b & 192) == 192 && (b & 32) == 0){
+                }else if ((b0 & 0xE0) == 0xC0 && (b0 & 0x1E) != 0){
                     // 110x xxxx 为双字节字符
-                    if (i + 1 < limit && CharUtil.isUTF8AfterByte(src[i + 1])){
+                    if (i + 1 >= limit){
+                        return false;
+                    }
+                    int b1 = src[i + 1] & 0x00FF;
+                    if ((b1 & 0xC0) != 0x80){
                         i += 2;
-                    }else {
-                        // 字节序列不符合UTF8编码 当即截断 当不符合编码的字节用\xxx表示 以下同
+                    }
+                }else if ((b0 & 0xF0) == 0xE0){
+                    if (i + 2 >= limit){
                         return false;
                     }
-                }else if ((b & 224) == 224 && (b & 16) == 0){
                     // 1110 xxxx 为3字节字符
-                    if (i + 1 < limit && CharUtil.isUTF8AfterByte(src[i + 1])){
-                        if (i + 2 < limit && CharUtil.isUTF8AfterByte(src[i + 2])){
-                            i += 3;
-                        }else {
-                            return false;
-                        }
-                    }else {
+                    int b1 = src[i + 1] & 0x00FF;
+                    if ((b1 & 0xC0) != 0x80 ||
+                            (b0 == 0xED && b1 >= 0xA0) ||
+                            ((b0 & 0x0F) == 0) && (b1 & 0x20) == 0){
                         return false;
-                    }
-                }else if ((b & 240) == 240 && (b & 8) == 0){
-                    // 1111 0xxx 为4字节字符
-                    if (i + 1 < limit && CharUtil.isUTF8AfterByte(src[i + 1])){
-                        if (i + 2 < limit && CharUtil.isUTF8AfterByte(src[i + 2])){
-                            if (i + 3 < limit && CharUtil.isUTF8AfterByte(src[i + 3])){
-                                i += 4;
-                            }else {
-                                return false;
-                            }
 
-                        }else {
-                            return false;
-                        }
-                    }else {
+                    }
+                    int b2 = src[i + 2] & 0x00FF;
+                    if ((b2 & 0xC0) != 0x80){
                         return false;
                     }
+
+                    i += 3;
+                }else if ((b0 & 240) == 240 && (b0 & 8) == 0){
+                    // 1111 0xxx 为4字节字符
+                    if (i + 3 >= limit){
+                        return false;
+                    }
+                    int b1 = src[i + 1] & 0x00FF;
+                    if ((b1 & 0xC0) != 0x80 || ((b1 & 0x30) == 0 && (b0 & 0x07) == 0)){
+                        return false;
+                    }
+                    int b2 = src[i + 2] & 0x00FF;
+                    if ((b2 & 0xC0) != 0x80){
+                        return false;
+                    }
+                    int b3 = src[i + 3] & 0x00FF;
+                    if ((b3 & 0xC0) != 0x80){
+                        return false;
+                    }
+
+                    int uuuu = ((b0 << 2) & 0x001C) | ((b1 >> 4) & 0x0003);
+                    if (uuuu > 0x10){
+                        return false;
+                    }
+
+                    i += 4;
                 }else {
                     return false;
                 }
@@ -397,6 +413,15 @@ public class CharacterUtil {
          */
         public static boolean isPrintable(byte b){
             return !unprintable.contains(b);
+        }
+
+        /**
+         * 目标字节是否可打印的ASCII字符
+         * @param b 目标字节
+         * @return
+         */
+        public static boolean isPrintable(int b){
+            return !unprintable.contains((byte) b);
         }
 
         /**

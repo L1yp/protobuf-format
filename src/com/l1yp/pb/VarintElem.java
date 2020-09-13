@@ -1,4 +1,6 @@
-package com.l1yp.util;
+package com.l1yp.pb;
+
+import com.l1yp.util.HexUtil;
 
 public class VarintElem extends BaseElem {
     private long value;
