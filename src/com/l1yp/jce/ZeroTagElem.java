@@ -7,4 +7,8 @@ package com.l1yp.jce;
  */
 public class ZeroTagElem extends BaseElem {
 
+    @Override
+    public String toString() {
+        return "ZeroTag[" + head.tag + "]";
+    }
 }

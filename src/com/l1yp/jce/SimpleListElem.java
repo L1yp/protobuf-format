@@ -1,5 +1,7 @@
 package com.l1yp.jce;
 
+import com.l1yp.util.HexUtil;
+
 import java.util.Arrays;
 
 /**
@@ -11,6 +13,10 @@ public class SimpleListElem extends BaseElem {
 
     public byte[] bytes;
 
+    @Override
+    public String toString() {
+        return (bytes == null || bytes.length == 0) ? "" : HexUtil.bin2hex(bytes);
+    }
 
     @Override
     public boolean equals(Object o) {

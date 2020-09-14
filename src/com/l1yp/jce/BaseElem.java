@@ -20,6 +20,10 @@ public abstract class BaseElem {
         head = packet.readHead();
     }
 
+    public boolean isLeaf(){
+        return children == null || children.isEmpty();
+    }
+
     public static BaseElem getElem(int type){
         return switch (type){
             case HeadData.BYTE -> new ByteElem();

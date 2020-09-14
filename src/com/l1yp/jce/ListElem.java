@@ -10,12 +10,20 @@ import java.util.List;
  */
 public class ListElem extends BaseElem {
 
-    private List<BaseElem> list = new ArrayList<>();
+    public List<BaseElem> list = new ArrayList<>();
 
     public void add(BaseElem e){
         list.add(e);
     }
 
 
+    @Override
+    public boolean isLeaf() {
+        return list.isEmpty();
+    }
 
+    @Override
+    public String toString() {
+        return "ListElem[" + head.tag + "] length: " + list.size();
+    }
 }

@@ -12,4 +12,8 @@ public class RootElem extends BaseElem {
         children = new ArrayList<>();
     }
 
+    @Override
+    public String toString() {
+        return "root";
+    }
 }

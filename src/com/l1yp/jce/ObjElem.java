@@ -13,4 +13,8 @@ public class ObjElem extends BaseElem {
         children = new ArrayList<>();
     }
 
+    @Override
+    public String toString() {
+        return "Object";
+    }
 }

@@ -10,9 +10,9 @@ import com.l1yp.util.Packet;
  */
 public class JceParser {
 
-    public RootElem parse(byte[] bytes, int pos, int len){
+    public ObjElem parse(byte[] bytes, int pos, int len){
         Packet packet = new Packet(bytes, pos, len);
-        RootElem root = new RootElem();
+        ObjElem root = new ObjElem();
         while (packet.remaining() > 0){
             BaseElem elem = readObj(packet);
             root.children.add(elem);
@@ -85,7 +85,6 @@ public class JceParser {
                 int readerPos = packet.getReaderPos();
                 try{
                     if (buf[readerPos] == 120){
-                        oldSize = size;
                         byte[] result = HexUtil.uncompress(buf, readerPos, size);
                         if (result.length > 0){
                             buf = result;
@@ -93,11 +92,10 @@ public class JceParser {
                             size = buf.length;
                         }
                     }
-                    RootElem rootElem = parse(buf, readerPos, size);
+                    ObjElem rootElem = parse(buf, readerPos, size);
                     packet.skip(oldSize);
                     return rootElem;
                 }catch (Exception e){
-                    e.printStackTrace();
                     elem.bytes = packet.readBytes(oldSize);
                     return elem;
                 }

@@ -11,11 +11,19 @@ import java.util.Map;
  */
 public class MapElem extends BaseElem {
 
-    Map<BaseElem, BaseElem> map = new LinkedHashMap<>();
+    public Map<BaseElem, BaseElem> map = new LinkedHashMap<>();
 
     public void put(BaseElem k, BaseElem v){
         map.put(k, v);
     }
 
+    @Override
+    public boolean isLeaf(){
+        return map.isEmpty();
+    }
 
+    @Override
+    public String toString() {
+        return "Map[" + head.tag + "]";
+    }
 }
